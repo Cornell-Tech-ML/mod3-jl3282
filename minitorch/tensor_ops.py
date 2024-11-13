@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 from tkinter.tix import MAX
-from typing import TYPE_CHECKING, Callable, Optional, Type
+from typing import TYPE_CHECKING, Callable, Optional, Type, Any
 
 import numpy as np
 from typing_extensions import Protocol
 
 from . import operators
 from .tensor_data import (
-    # MAX_DIMS,
+    MAX_DIMS,
     broadcast_index,
     index_to_position,
     shape_broadcast,
     to_index,
+    Index, 
 )
 
 if TYPE_CHECKING:
@@ -276,8 +277,11 @@ def tensor_map(fn:Callable[[float],float]) -> Any:
         in_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 2.3.
-        out_index: Index = np.zeros(MAX_DIMS, np.int16)
-        in_index: Index = np.zeros(MAX_DIMS, np.int16)
+
+        # out_index: Index = np.zeros(MAX_DIMS, np.int16)
+        # in_index: Index = np.zeros(MAX_DIMS, np.int16)
+        out_index: Index = np.zeros(MAX_DIMS, np.int32) # changed from int16 to int32 to avoid overflow
+        in_index: Index = np.zeros(MAX_DIMS, np.int32) # changed from int16 to int32 to avoid overflow
         for i in range(len(out)):
             to_index(i, out_shape, out_index)
             broadcast_index(out_index, out_shape, in_shape, in_index)

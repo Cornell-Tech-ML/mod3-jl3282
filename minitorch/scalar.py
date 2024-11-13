@@ -139,7 +139,7 @@ class Scalar:
         backpropagate(self, d_output)
 
     # TODO: Implement for Task 1.2.
-    def __eq__(self, b: ScalarLike) -> Scalar:
+    def __eq__(self, b: ScalarLike) -> Scalar: # type: ignore
         """Check equality between this variable and another scalar."""
         return EQ.apply(b, self)
 
