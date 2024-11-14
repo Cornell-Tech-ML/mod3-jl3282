@@ -170,6 +170,7 @@ def tensor_map(
         in_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 3.1.
+        # When `out` and `in` are stride-aligned, avoid indexing
         if list(out_shape) == list(in_shape) and list(out_strides) == list(in_strides):
             for i in prange(len(out)):
                 out[i] = fn(in_storage[i])
@@ -222,6 +223,7 @@ def tensor_zip(
         b_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 3.1.
+        # When `out` and `in` are stride-aligned, avoid indexing
         if list(out_shape) == list(a_shape) == list(b_shape) and list(out_strides) == list(a_strides) == list(b_strides):
             for i in prange(len(out)):
                 out[i] = fn(a_storage[i], b_storage[i])
