@@ -211,8 +211,7 @@ def tensor_map(
                 broadcast_index(out_index, out_shape, in_shape, in_index)
                 o = index_to_position(out_index, out_strides)
                 j = index_to_position(in_index, in_strides)
-                local = fn(in_storage[j])
-                out[o] = local
+                out[o] = fn(in_storage[j])
 
     return cuda.jit()(_map)  # type: ignore
 
@@ -262,8 +261,7 @@ def tensor_zip(
             o = index_to_position(out_index, out_strides)
             j = index_to_position(a_index, a_strides)
             k = index_to_position(b_index, b_strides)
-            local = fn(a_storage[j], b_storage[k])
-            out[o] = local
+            out[o] = fn(a_storage[j], b_storage[k])
 
 
     return cuda.jit()(_zip)  # type: ignore
@@ -297,15 +295,26 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
     pos = cuda.threadIdx.x
 
     # TODO: Implement for Task 3.3.
+    # if i < size:
+    #     cache[pos] = a[i]
     if i < size:
         cache[pos] = a[i]
+    else:
+        cache[pos] = 0
     cuda.syncthreads()
     
-    for stride in range(BLOCK_DIM//2 , 0, -1):
+    # for stride in range(BLOCK_DIM//2 , 0, -1):
+    #     if pos < stride:
+    #         cache[pos] += cache[pos + stride]
+    #     cuda.syncthreads()
+
+    stride = BLOCK_DIM // 2
+    while stride > 0:
         if pos < stride:
             cache[pos] += cache[pos + stride]
+        stride //= 2
         cuda.syncthreads()
-
+        
     if pos == 0:
         out[cuda.blockIdx.x] = cache[0]
     
