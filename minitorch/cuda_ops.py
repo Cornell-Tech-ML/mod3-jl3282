@@ -362,26 +362,20 @@ def tensor_reduce(
         # TODO: Implement for Task 3.3.
         i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
         cache[pos] = reduce_value
-        
+        to_index(out_pos, out_shape, out_index)
+
         while i < a_shape[reduce_dim]:
-            to_index(i, a_shape, out_index)
             out_index[reduce_dim] = i
-            j = index_to_position(out_index, a_strides)
-            cache[pos] = fn(cache[pos], a_storage[j])
-            i += cuda.blockDim.x * cuda.gridDim.x
+            cache[pos] = a_storage[index_to_position(out_index, a_strides)]
         cuda.syncthreads()
 
-        stride = BLOCK_DIM // 2
-        while stride > 0:
-            if pos < stride:
-                cache[pos] = fn(cache[pos], cache[pos + stride])
-            stride //= 2
-            cuda.syncthreads()
-        
-        if pos == 0:
-            to_index(out_pos, out_shape, out_index)
-            o = index_to_position(out_index, out_strides)
-            out[o] = cache[0]
+        if pos == 0 and i < a_shape[reduce_dim]:
+            local = reduce_value
+            for j in range(1, a_shape[reduce_dim]):
+                local = fn(local, cache[j])
+
+            out[out_pos] = local
+
 
     return jit(_reduce)  # type: ignore
 
@@ -419,22 +413,22 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     """
     BLOCK_DIM = 32
     # TODO: Implement for Task 3.3.
-    x = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-    y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
+    row = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+    col = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
 
     a_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     b_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
 
-    if x < size and y < size:
-        a_shared[x, y] = a[x * size + y] 
-        b_shared[x, y] = b[x * size + y]   
+    if row < size and col < size:
+        a_shared[row, col] = a[row * size + col] 
+        b_shared[row, col] = b[row * size + col]   
     cuda.syncthreads()
 
-    if x < size and y < size:
+    if row < size and col < size:
         local = 0
         for k in range(size):
-            local += a_shared[x, k] * b_shared[k, y]
-        out[x * size + y] = local
+            local += a_shared[row, k] * b_shared[k, col]
+        out[row * size + col] = local
 
 jit_mm_practice = jit(_mm_practice)
 
