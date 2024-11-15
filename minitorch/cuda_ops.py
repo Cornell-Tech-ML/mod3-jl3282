@@ -360,12 +360,9 @@ def tensor_reduce(
         pos = cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
-        i = out_pos * cuda.blockDim.x + pos
-        if i >= a_shape[reduce_dim]:
-            return
-        
+        i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
         cache[pos] = reduce_value
-
+        
         while i < a_shape[reduce_dim]:
             to_index(i, a_shape, out_index)
             out_index[reduce_dim] = i
