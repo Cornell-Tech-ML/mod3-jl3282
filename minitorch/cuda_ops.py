@@ -295,18 +295,11 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
     pos = cuda.threadIdx.x
 
     # TODO: Implement for Task 3.3.
-    # if i < size:
-    #     cache[pos] = a[i]
     if i < size:
         cache[pos] = a[i]
     else:
         cache[pos] = 0
     cuda.syncthreads()
-    
-    # for stride in range(BLOCK_DIM//2 , 0, -1):
-    #     if pos < stride:
-    #         cache[pos] += cache[pos + stride]
-    #     cuda.syncthreads()
 
     stride = BLOCK_DIM // 2
     while stride > 0:
@@ -314,7 +307,7 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
             cache[pos] += cache[pos + stride]
         stride //= 2
         cuda.syncthreads()
-        
+
     if pos == 0:
         out[cuda.blockIdx.x] = cache[0]
     
@@ -361,13 +354,37 @@ def tensor_reduce(
         reduce_value: float,
     ) -> None:
         BLOCK_DIM = 1024
-        cache = cuda.shared.array(BLOCK_DIM, numba.float64)
+        cache = cuda.shared.array(BLOCK_DIM, numba.float64) # shared
         out_index = cuda.local.array(MAX_DIMS, numba.int32)
         out_pos = cuda.blockIdx.x
         pos = cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
-        raise NotImplementedError("Need to implement for Task 3.3")
+        i = out_pos * cuda.blockDim.x + pos
+        if i >= a_shape[reduce_dim]:
+            return
+        
+        cache[pos] = reduce_value
+
+        while i < a_shape[reduce_dim]:
+            to_index(i, a_shape, out_index)
+            out_index[reduce_dim] = i
+            j = index_to_position(out_index, a_strides)
+            cache[pos] = fn(cache[pos], a_storage[j])
+            i += cuda.blockDim.x * cuda.gridDim.x
+        cuda.syncthreads()
+
+        stride = BLOCK_DIM // 2
+        while stride > 0:
+            if pos < stride:
+                cache[pos] = fn(cache[pos], cache[pos + stride])
+            stride //= 2
+            cuda.syncthreads()
+        
+        if pos == 0:
+            to_index(out_pos, out_shape, out_index)
+            o = index_to_position(out_index, out_strides)
+            out[o] = cache[0]
 
     return jit(_reduce)  # type: ignore
 
