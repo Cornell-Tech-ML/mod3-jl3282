@@ -414,22 +414,22 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     """
     BLOCK_DIM = 32
     # TODO: Implement for Task 3.3.
-    row = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-    col = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
+    # row = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+    # col = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
 
-    a_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
-    b_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    # a_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    # b_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
 
-    if row < size and col < size:
-        a_shared[row, col] = a[row * size + col] 
-        b_shared[row, col] = b[row * size + col]   
-    cuda.syncthreads()
+    # if row < size and col < size:
+    #     a_shared[row, col] = a[row * size + col] 
+    #     b_shared[row, col] = b[row * size + col]   
+    # cuda.syncthreads()
 
-    if row < size and col < size:
-        local = 0
-        for k in range(size):
-            local += a_shared[row, k] * b_shared[k, col]
-        out[row * size + col] = local
+    # if row < size and col < size:
+    #     local = 0
+    #     for k in range(size):
+    #         local += a_shared[row, k] * b_shared[k, col]
+    #     out[row * size + col] = local
 
 jit_mm_practice = jit(_mm_practice)
 
