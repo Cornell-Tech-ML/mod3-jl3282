@@ -519,31 +519,32 @@ def _tensor_matrix_multiply(
     #    b) Copy into shared memory for b matrix
     #    c) Compute the dot produce for position c[i, j]
     # TODO: Implement for Task 3.4.
-    accum_value = 0.0
-    shared_dim = a_shape[-1]
+    accum = 0.0
+    shared_dim = a_shape[2]  # K dimension
 
     for k in range(0, shared_dim, BLOCK_DIM):
-        if i < a_shape[-2] and (k + pj) < shared_dim:
-            a_shared[pi, pj] = a_storage[
-                batch * a_batch_stride + i * a_strides[1] + (k + pj)
-            ]
+        if i < a_shape[1] and (k + pj) < shared_dim:
+            a_idx = batch * a_batch_stride + i * a_strides[1] + (k + pj) * a_strides[2]
+            a_shared[pi, pj] = a_storage[a_idx]
         else:
             a_shared[pi, pj] = 0.0
 
-        if j < b_shape[-1] and (k + pi) < shared_dim:
-            b_shared[pi, pj] = b_storage[
-                batch * b_batch_stride + (k + pi) * b_strides[1] + j
-            ]
+        if (k + pi) < shared_dim and j < b_shape[2]:
+            b_idx = batch * b_batch_stride + (k + pi) * b_strides[1] + j * b_strides[2]
+            b_shared[pi, pj] = b_storage[b_idx]
         else:
             b_shared[pi, pj] = 0.0
+
         cuda.syncthreads()
 
-        for pk in range(BLOCK_DIM):
-            if (k + pk) < shared_dim:
-                accum_value += a_shared[pi, pk] * b_shared[pk, pj]
+        if i < out_shape[1] and j < out_shape[2]:
+            for kk in range(min(BLOCK_DIM, shared_dim - k)):
+                accum += a_shared[pi, kk] * b_shared[kk, pj]
+
         cuda.syncthreads()
 
-    if i < out_shape[-2] and j < out_shape[-1]:
-        out[batch * out_strides[0] + i * out_strides[1] + j] = accum_value
+    if i < out_shape[1] and j < out_shape[2]:
+        out_idx = batch * out_strides[0] + i * out_strides[1] + j * out_strides[2]
+        out[out_idx] = accum
     
 tensor_matrix_multiply = jit(_tensor_matrix_multiply)
