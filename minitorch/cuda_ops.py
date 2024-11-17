@@ -306,9 +306,9 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
         if pos < stride:
             cache[pos] += cache[pos + stride]
         stride //= 2
-        cuda.syncthreads()
+    cuda.syncthreads()
 
-    if pos == 0:
+    if pos == 0 and i < size:
         out[cuda.blockIdx.x] = cache[0]
     
 
