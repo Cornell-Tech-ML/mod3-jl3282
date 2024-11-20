@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tkinter.tix import MAX
+# from tkinter.tix import MAX
 from typing import TYPE_CHECKING, Callable, Optional, Type, Any
 
 import numpy as np

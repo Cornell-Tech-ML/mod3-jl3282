@@ -109,7 +109,7 @@ class CudaOps(TensorOps):
     ) -> Callable[[Tensor, int], Tensor]:
         """See `tensor_ops.py`"""
         cufn: Callable[[float, float], float] = device_jit(fn)
-        f = tensor_reduce(cufn)
+        f = tensor_reduce(cufn) 
 
         def ret(a: Tensor, dim: int) -> Tensor:
             out_shape = list(a.shape)
@@ -359,7 +359,10 @@ def tensor_reduce(
         out_index = cuda.local.array(MAX_DIMS, numba.int32)
         out_pos = cuda.blockIdx.x
         pos = cuda.threadIdx.x
-
+# pad out to 2^0 if the size is not an even number
+# if its longer than 1024 run redue multuple times to get down to the final value
+# where to read and write? 
+# while loop also fine 
         # TODO: Implement for Task 3.3.
         i = out_index[reduce_dim] * cuda.blockDim.x + cuda.threadIdx.x
         # cache[pos] = reduce_value
@@ -416,6 +419,9 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
 
     """
     BLOCK_DIM = 32
+# extra dimension just becomes an extra block, should not leave them empty 
+# if the shared memory is too small, it has to move around
+# make sure you implement the sliding window for the shared memory 
     # TODO: Implement for Task 3.3.
     thread_row = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
     thread_col = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
