@@ -177,8 +177,8 @@ def tensor_map(
             return
         else:
             for i in prange(len(out)):
-                out_index: Index = np.zeros(MAX_DIMS, np.int32) # changed from int16 to int32 to avoid overflow
-                in_index: Index = np.zeros(MAX_DIMS, np.int32) # changed from int16 to int32 to avoid overflow
+                out_index: Index = np.empty(MAX_DIMS, np.int32) # changed from int16 to int32 to avoid overflow
+                in_index: Index = np.empty(MAX_DIMS, np.int32) # changed from int16 to int32 to avoid overflow
                 to_index(i, out_shape, out_index)
                 broadcast_index(out_index, out_shape, in_shape, in_index)
                 o = index_to_position(out_index, out_strides)
@@ -230,9 +230,9 @@ def tensor_zip(
             return
         else:
             for i in prange(len(out)):
-                out_index: Index = np.zeros(MAX_DIMS, np.int32)
-                a_index: Index = np.zeros(MAX_DIMS, np.int32)
-                b_index: Index = np.zeros(MAX_DIMS, np.int32)
+                out_index: Index = np.empty(MAX_DIMS, np.int32)
+                a_index: Index = np.empty(MAX_DIMS, np.int32)
+                b_index: Index = np.empty(MAX_DIMS, np.int32)
                 to_index(i, out_shape, out_index)
                 o = index_to_position(out_index, out_strides)
                 broadcast_index(out_index, out_shape, a_shape, a_index)
@@ -279,7 +279,7 @@ def tensor_reduce(
         reduce_stride = a_strides[reduce_dim]
 
         for i in prange(len(out)):
-            out_index: Index = np.zeros(MAX_DIMS, np.int32)
+            out_index: Index = np.empty(MAX_DIMS, np.int32)
             to_index(i, out_shape, out_index)
             o = index_to_position(out_index, out_strides) # where to write
             j = index_to_position(out_index, a_strides) # where to read
