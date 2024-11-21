@@ -437,7 +437,7 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     # extra dimension just becomes an extra block, should not leave them empty
     # if the shared memory is too small, it has to move around
     # make sure you implement the sliding window for the shared memory
-    # TODO: Implement for Task 3.3.
+    # TODO: Implement for Task 3.4.
     thread_row = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
     thread_col = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
 
