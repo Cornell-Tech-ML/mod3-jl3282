@@ -177,8 +177,12 @@ def tensor_map(
             return
         else:
             for i in prange(len(out)):
-                out_index: Index = np.empty(MAX_DIMS, np.int32) # changed from int16 to int32 to avoid overflow
-                in_index: Index = np.empty(MAX_DIMS, np.int32) # changed from int16 to int32 to avoid overflow
+                out_index: Index = np.empty(
+                    MAX_DIMS, np.int32
+                )  # changed from int16 to int32 to avoid overflow
+                in_index: Index = np.empty(
+                    MAX_DIMS, np.int32
+                )  # changed from int16 to int32 to avoid overflow
                 to_index(i, out_shape, out_index)
                 broadcast_index(out_index, out_shape, in_shape, in_index)
                 o = index_to_position(out_index, out_strides)
@@ -224,7 +228,9 @@ def tensor_zip(
     ) -> None:
         # TODO: Implement for Task 3.1.
         # When `out` and `in` are stride-aligned, avoid indexing
-        if list(out_shape) == list(a_shape) == list(b_shape) and list(out_strides) == list(a_strides) == list(b_strides):
+        if list(out_shape) == list(a_shape) == list(b_shape) and list(
+            out_strides
+        ) == list(a_strides) == list(b_strides):
             for i in prange(len(out)):
                 out[i] = fn(a_storage[i], b_storage[i])
             return
@@ -281,13 +287,14 @@ def tensor_reduce(
         for i in prange(len(out)):
             out_index: Index = np.empty(MAX_DIMS, np.int32)
             to_index(i, out_shape, out_index)
-            o = index_to_position(out_index, out_strides) # where to write
-            j = index_to_position(out_index, a_strides) # where to read
-            local = out[o] # Use local variable for reduction
+            o = index_to_position(out_index, out_strides)  # where to write
+            j = index_to_position(out_index, a_strides)  # where to read
+            local = out[o]  # Use local variable for reduction
             for _ in range(reduce_size):
-                local = fn(local, a_storage[j]) # Apply reduction
-                j += reduce_stride # Move to next element
+                local = fn(local, a_storage[j])  # Apply reduction
+                j += reduce_stride  # Move to next element
             out[o] = local
+
     return njit(_reduce, parallel=True)  # type: ignore
 
 
@@ -336,15 +343,17 @@ def _tensor_matrix_multiply(
     """
     a_batch_stride = a_strides[0] if a_shape[0] > 1 else 0
     b_batch_stride = b_strides[0] if b_shape[0] > 1 else 0
-    
+
     # TODO: Implement for Task 3.2.
     row_stride_a = a_strides[1]
     col_stride_b = b_strides[2]
 
-    for n in prange(out_shape[0]): # parallel
-        for i in range(out_shape[1]): # rows
-            for j in range(out_shape[2]): # cols
-                o = n * out_strides[0] + i * out_strides[1] + j * out_strides[2] # position
+    for n in prange(out_shape[0]):  # parallel
+        for i in range(out_shape[1]):  # rows
+            for j in range(out_shape[2]):  # cols
+                o = (
+                    n * out_strides[0] + i * out_strides[1] + j * out_strides[2]
+                )  # position
                 local = 0.0
                 row_pos_a = n * a_batch_stride + i * row_stride_a
                 col_pos_b = n * b_batch_stride + j * col_stride_b
@@ -353,7 +362,6 @@ def _tensor_matrix_multiply(
                     row_pos_a += a_strides[2]
                     col_pos_b += b_strides[1]
                 out[o] = local
-
 
     # for n in prange(out_shape[0]): # parallel
     #     for i in range(out_shape[1]): # rows
@@ -366,8 +374,6 @@ def _tensor_matrix_multiply(
     #                 a = index_to_position(a_index, a_strides)
     #                 b = index_to_position(b_index, b_strides)
     #                 out[o] += a_storage[a] * b_storage[b]
-
-
 
 
 tensor_matrix_multiply = njit(_tensor_matrix_multiply, parallel=True)

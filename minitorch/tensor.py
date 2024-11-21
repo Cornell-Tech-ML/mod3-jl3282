@@ -347,7 +347,7 @@ class Tensor:
     def __lt__(self, b: TensorLike) -> Tensor:
         return LT.apply(self, self._ensure_tensor(b))
 
-    def __eq__(self, b: TensorLike) -> Tensor: # type: ignore[override]
+    def __eq__(self, b: TensorLike) -> Tensor:  # type: ignore[override]
         return EQ.apply(self, self._ensure_tensor(b))
 
     def __gt__(self, b: TensorLike) -> Tensor:
@@ -407,11 +407,11 @@ class Tensor:
     def permute(self, *order: int) -> Tensor:
         """Permute the dimensions of the tensor."""
         return Permute.apply(self, tensor(list(order)))
-    
+
     def view(self, *shape: int) -> Tensor:
         """View the tensor as a different shape."""
         return View.apply(self, tensor(list(shape)))
 
-    def zero_grad_(self) -> None: # pragma: no cover
+    def zero_grad_(self) -> None:  # pragma: no cover
         """Set the gradient to None."""
         self.grad = None

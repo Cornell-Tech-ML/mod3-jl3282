@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -143,6 +143,7 @@ class Sigmoid(Function):
         sigma: Tensor = ctx.saved_values[0]
         return sigma * (-sigma + 1.0) * grad_output
 
+
 class ReLU(Function):
     @staticmethod
     def forward(ctx: Context, a: Tensor) -> Tensor:
@@ -192,11 +193,9 @@ class Sum(Function):
         """Sum of a tensor"""
         ctx.save_for_backward(a.shape, dim)
         return a.f.add_reduce(a, int(dim.item()))
-                    
+
     @staticmethod
-    def backward(
-        ctx: Context, grad_output: Tensor
-    ) -> Tuple[Tensor, float]:
+    def backward(ctx: Context, grad_output: Tensor) -> Tuple[Tensor, float]:
         """Gradient tensor of the Sum"""
         a_shape, dim = ctx.saved_values
         return grad_output, 0.0
@@ -252,9 +251,9 @@ class Permute(Function):
         order2: List[int] = [
             a[0]
             for a in sorted(
-                enumerate([order[i] for i in range(order.size)]), key = lambda a: a[1]
+                enumerate([order[i] for i in range(order.size)]), key=lambda a: a[1]
             )
-            ]
+        ]
         return grad_output._new(grad_output._tensor.permute(*order2)), 0.0
 
 

@@ -35,7 +35,7 @@ class Network(minitorch.Module):
         h = self.layer1.forward(x).relu()
         h = self.layer2.forward(h).relu()
         return self.layer3.forward(h).sigmoid()
-    
+
 
 class Linear(minitorch.Module):
     def __init__(self, in_size, out_size, backend):
@@ -50,12 +50,12 @@ class Linear(minitorch.Module):
         # TODO: Implement for Task 3.5.
         if len(x.shape) == 1:
             x = x.view(1, x.shape[0])
-            
+
         out = x @ self.weights.value
-        
+
         return out + self.bias.value
 
-        
+
 
 
 class FastTrain:
@@ -100,7 +100,7 @@ class FastTrain:
 
                 # Update
                 optim.step()
-            
+
             # epoch_time = time.time() - start_time  # Added: Calculate epoch time
             # epoch_times.append(epoch_time) # Added: Append epoch time to list
             losses.append(total_loss)
@@ -113,7 +113,7 @@ class FastTrain:
                 correct = int(((out.detach() > 0.5) == y2).sum()[0])
                 log_fn(epoch, total_loss, correct, losses)
                 # print(f"Epoch {epoch} took {epoch_time:.4f} seconds")
-       
+
         # Print average time per epoch
         # avg_time = sum(epoch_times) / len(epoch_times)
         # print(f"Average time per epoch: {avg_time:.4f} seconds")

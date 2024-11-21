@@ -13,7 +13,7 @@ from .tensor_data import (
     index_to_position,
     shape_broadcast,
     to_index,
-    Index, 
+    Index,
 )
 
 if TYPE_CHECKING:
@@ -240,9 +240,9 @@ class SimpleOps(TensorOps):
 # Implementations.
 
 
-def tensor_map(fn:Callable[[float],float]) -> Any:
-#     fn: Callable[[float], float],
-# ) -> Callable[[Storage, Shape, Strides, Storage, Shape, Strides], None]:
+def tensor_map(fn: Callable[[float], float]) -> Any:
+    #     fn: Callable[[float], float],
+    # ) -> Callable[[Storage, Shape, Strides, Storage, Shape, Strides], None]:
     """Low-level implementation of tensor map between
     tensors with *possibly different strides*.
 
@@ -280,8 +280,12 @@ def tensor_map(fn:Callable[[float],float]) -> Any:
 
         # out_index: Index = np.zeros(MAX_DIMS, np.int16)
         # in_index: Index = np.zeros(MAX_DIMS, np.int16)
-        out_index: Index = np.zeros(MAX_DIMS, np.int32) # changed from int16 to int32 to avoid overflow
-        in_index: Index = np.zeros(MAX_DIMS, np.int32) # changed from int16 to int32 to avoid overflow
+        out_index: Index = np.zeros(
+            MAX_DIMS, np.int32
+        )  # changed from int16 to int32 to avoid overflow
+        in_index: Index = np.zeros(
+            MAX_DIMS, np.int32
+        )  # changed from int16 to int32 to avoid overflow
         for i in range(len(out)):
             to_index(i, out_shape, out_index)
             broadcast_index(out_index, out_shape, in_shape, in_index)
@@ -312,10 +316,10 @@ def tensor_map(fn:Callable[[float],float]) -> Any:
 
 
 def tensor_zip(fn: Callable[[float, float], float]) -> Any:
-#     fn: Callable[[float, float], float],
-# ) -> Callable[
-#     [Storage, Shape, Strides, Storage, Shape, Strides, Storage, Shape, Strides], None
-# ]:
+    #     fn: Callable[[float, float], float],
+    # ) -> Callable[
+    #     [Storage, Shape, Strides, Storage, Shape, Strides, Storage, Shape, Strides], None
+    # ]:
     """Low-level implementation of tensor zip between
     tensors with *possibly different strides*.
 
@@ -365,7 +369,6 @@ def tensor_zip(fn: Callable[[float, float], float]) -> Any:
             k = index_to_position(b_index, b_strides)
             out[o] = fn(a_storage[j], b_storage[k])
 
-
         # out_size = int(np.prod(out_shape))
 
         # out_index = np.zeros(len(out_shape), dtype=np.int32)
@@ -392,8 +395,8 @@ def tensor_zip(fn: Callable[[float, float], float]) -> Any:
 
 
 def tensor_reduce(fn: Callable[[float, float], float]) -> Any:
-#     fn: Callable[[float, float], float],
-# ) -> Callable[[Storage, Shape, Strides, Storage, Shape, Strides, int], None]:
+    #     fn: Callable[[float, float], float],
+    # ) -> Callable[[Storage, Shape, Strides, Storage, Shape, Strides, int], None]:
     """Low-level implementation of tensor reduce.
 
     * `out_shape` will be the same as `a_shape`
