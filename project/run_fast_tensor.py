@@ -54,7 +54,7 @@ class Linear(minitorch.Module):
         out = x @ self.weights.value
 
         return out + self.bias.value
-
+ 
 
 
 

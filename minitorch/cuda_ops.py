@@ -433,15 +433,18 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
         size (int): size of the square
 
     """
-    BLOCK_DIM = 32
-    # extra dimension just becomes an extra block, should not leave them empty
-    # if the shared memory is too small, it has to move around
-    # make sure you implement the sliding window for the shared memory
+    BLOCK_DIM = 32 # Block size is 32x32 for shared memory usage
+    # <Note from the lecture>
+        # extra dimension just becomes an extra block, should not leave them empty
+        # if the shared memory is too small, it has to move around
+        # make sure you implement the sliding window for the shared memory
     # TODO: Implement for Task 3.4.
+    # Calculate the global thread indices
+    # Each thread corresponds to one cell in the output matrix
     thread_row = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
     thread_col = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
-
-    # Shared memory for input matrices
+    
+    # Allocate shared memory for matrices a and b (shared by threads in the same block)
     a_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     b_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
 
@@ -449,15 +452,19 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     for row in range(BLOCK_DIM):
         for col in range(BLOCK_DIM):
             if row < size and col < size:
+                # Copy elements from global memory to shared memory
                 a_shared[row, col] = a[row * size + col]
                 b_shared[row, col] = b[row * size + col]
 
+    # Synchronize threads
     cuda.syncthreads()
 
     # Perform matrix multiplication
+    # Each thread computes a single element in the output matrix
     if thread_row < size and thread_col < size:
         accum_value = 0
         for k in range(size):
+            # Compute the dot product for the thread's assigned row and column
             accum_value += a_shared[thread_row, k] * b_shared[k, thread_col]
 
         # Save result to global memory
@@ -525,11 +532,13 @@ def _tensor_matrix_multiply(
     # Batch dimension - fixed
     batch = cuda.blockIdx.z
 
+    # Shared memory allocation for matrix a and b
     BLOCK_DIM = 32
     a_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     b_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
 
-    # The final position c[i, j]
+    # Compute global and local thread indices
+    # The final position c[i, j]; global position
     i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
     j = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
 
@@ -543,30 +552,36 @@ def _tensor_matrix_multiply(
     #    b) Copy into shared memory for b matrix
     #    c) Compute the dot produce for position c[i, j]
     # TODO: Implement for Task 3.4.
+    # Initialize the accumulator for output
     accum = 0.0
-    shared_dim = a_shape[2]  # K dimension
+    shared_dim = a_shape[2]  # Shared dimension (K dimension)
 
+    # Loop over shared memory tiles
     for k in range(0, shared_dim, BLOCK_DIM):
+        # Load tile from global to shared memory for matrix a
         if i < a_shape[1] and (k + pj) < shared_dim:
             a_idx = batch * a_batch_stride + i * a_strides[1] + (k + pj) * a_strides[2]
             a_shared[pi, pj] = a_storage[a_idx]
         else:
-            a_shared[pi, pj] = 0.0
+            a_shared[pi, pj] = 0.0 # if out-of-bounds, set the value to 0.0
 
+        # Similarly for matrix b, loads a tile into shared memory
         if (k + pi) < shared_dim and j < b_shape[2]:
             b_idx = batch * b_batch_stride + (k + pi) * b_strides[1] + j * b_strides[2]
             b_shared[pi, pj] = b_storage[b_idx]
         else:
-            b_shared[pi, pj] = 0.0
+            b_shared[pi, pj] = 0.0 # if out-of-bounds, set the value to 0.0
 
-        cuda.syncthreads()
-
+        cuda.syncthreads() # Ensure all threads have loaded their tiles
+    
+        # Compute partial dot product using the shared memory tiles for matrix a and b
         if i < out_shape[1] and j < out_shape[2]:
-            for kk in range(min(BLOCK_DIM, shared_dim - k)):
+            for kk in range(min(BLOCK_DIM, shared_dim - k)): # only iterate over the valid shared dimension
                 accum += a_shared[pi, kk] * b_shared[kk, pj]
 
-        cuda.syncthreads()
+        cuda.syncthreads() # Ensure all threads have computed their partial dot products
 
+    # Write result of the matrix multiplication to global memory, only for valid output indices
     if i < out_shape[1] and j < out_shape[2]:
         out_idx = batch * out_strides[0] + i * out_strides[1] + j * out_strides[2]
         out[out_idx] = accum
